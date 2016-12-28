@@ -155,12 +155,12 @@ function doIt() {
                       i--;
                       myLoop(i);
                     }
-                }, 7 * 1000)
+                }, 30 * 1000)
             })(taskLen - 1);
         } else {
           searchIt();
         }
-        var maxTime = (taskLen * 10 * 1000 / 360 * 10 * 1000)  < 3 ? 3600*1000*3 : taskLen * 10 * 1000;
+        var maxTime = (taskLen * 30 * 1000 / 360 * 10 * 1000)  < 3 ? 3600*1000*3 : taskLen * 30 * 1000;
 
         setTimeout(searchIt, maxTime);
     });
@@ -204,12 +204,12 @@ function searchIt() {
                       i--;
                       myLoop(i);
                     }
-                }, 7 * 1000)
+                }, 30 * 1000)
             })(productLen - 1);
         } else {
           doIt();
         }
-        var maxTime = (products.length * 10 * 1000 / 360 * 10 * 1000)  < 3 ? 3600*1000*3 : products.length * 10 * 1000;
+        var maxTime = (products.length * 30 * 1000 / 360 * 10 * 1000)  < 3 ? 3600*1000*3 : products.length * 30 * 1000;
         setTimeout(doIt, maxTime);
     });
 }
