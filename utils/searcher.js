@@ -8,7 +8,7 @@ var execFile = require('child-process-promise').execFile;
 module.exports = {
     flipkart: (name, pid) => {
         console.log("Flipkart suggestions");
-        return execFile('casperjs', ['routes/search/flipkart.js', String(name)])
+        return execFile('casperjs', ['--cookies-file='+pid+'.txt', 'routes/search/flipkart.js', String(name)])
           .then(function(result) {
             var stdout = result.stdout;
             var stderr = result.stderr;
@@ -47,7 +47,7 @@ module.exports = {
     },
     amazon: (name, pid) => {
         console.log("Amazon suggestions");
-        return execFile('casperjs', ['routes/search/amazon.js', String(name)])
+        return execFile('casperjs', ['--cookies-file='+pid+'.txt', 'routes/search/amazon.js', String(name)])
           .then(function(result) {
             var stdout = result.stdout;
             var stderr = result.stderr;
@@ -87,7 +87,7 @@ module.exports = {
 
     snapdeal: (name, pid) => {
         console.log("Snapdeal suggestions");
-        return execFile('casperjs', ['routes/search/snapdeal.js', String(name)])
+        return execFile('casperjs', ['--cookies-file='+pid+'.txt', 'routes/search/snapdeal.js', String(name)])
           .then(function(result) {
             var stdout = result.stdout;
             var stderr = result.stderr;
