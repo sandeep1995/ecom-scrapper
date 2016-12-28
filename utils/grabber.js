@@ -6,7 +6,7 @@ var execFile = require('child-process-promise').execFile;
 module.exports = {
     flipkart: (url, pid) => {
         console.log("Executing Flipkart");
-        return execFile('casperjs', ['--cookies-file=cookies.txt', 'routes/ecommerce/flipkart.js', url.split("&")[0]])
+        return execFile('casperjs', ['--cookies-file='+pid+'.txt', 'routes/ecommerce/flipkart.js', url.split("&")[0]])
             .then(function(result) {
                 var stdout = result.stdout;
                 var stderr = result.stderr;
@@ -42,7 +42,7 @@ module.exports = {
 
     amazon: (url, pid) => {
         console.log("Executing Amazon");
-        return execFile('casperjs', ['--cookies-file=cookies.txt', 'routes/ecommerce/amazon.js', url.split("ref")[0]])
+        return execFile('casperjs', ['--cookies-file='+pid+'.txt', 'routes/ecommerce/amazon.js', url.split("ref")[0]])
             .then(function(result) {
                 var stdout = result.stdout;
                 var stderr = result.stderr;
@@ -80,7 +80,7 @@ module.exports = {
 
     snapdeal: (url, pid) => {
         console.log("Executing Snapdeal");
-        return execFile('casperjs', ['--cookies-file=cookies.txt', 'routes/ecommerce/snapdeal.js', url])
+        return execFile('casperjs', ['--cookies-file='+pid+'.txt', 'routes/ecommerce/snapdeal.js', url])
             .then(function(result) {
                 var stdout = result.stdout;
                 var stderr = result.stderr;
@@ -115,7 +115,7 @@ module.exports = {
 
     myntra: (url, pid) => {
         console.log("Executing Myntra");
-        return execFile('casperjs', ['--cookies-file=cookies.txt', 'routes/ecommerce/myntra.js', url])
+        return execFile('casperjs', ['--cookies-file='+pid+'.txt', 'routes/ecommerce/myntra.js', url])
             .then(function(result) {
                 var stdout = result.stdout;
                 var stderr = result.stderr;
@@ -155,7 +155,7 @@ module.exports = {
 
     ebay: (url, pid) => {
         console.log("Executing Ebay");
-        return execFile('casperjs', ['--cookies-file=cookies.txt', 'routes/ecommerce/ebay.js', url])
+        return execFile('casperjs', ['--cookies-file='+pid+'.txt', 'routes/ecommerce/ebay.js', url])
             .then(function(result) {
                 var stdout = result.stdout;
                 var stderr = result.stderr;
