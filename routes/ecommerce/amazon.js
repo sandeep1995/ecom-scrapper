@@ -10,6 +10,12 @@ casper.options.onLoadError = function() {
     casper.exit();
 }
 
+//casper.on('error', function(msg,backtrace) {
+  //casper.capture('error.png');
+  //casper.echo(JSON.stringify(backtrace));
+  //casper.echo(JSON.stringify(msg));
+//});
+
 casper.userAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36');
 
 casper.options.waitTimeout = 10000;
@@ -20,7 +26,7 @@ casper.options.viewportSize = {
 
 var link = casper.cli.get(0);
 
-var productNameSelector = '#productTitle.a-size-large';
+var productNameSelector = 'span#productTitle';
 var priceSelector = '#priceblock_ourprice';
 var imgSelector = 'img#landingImage';
 
