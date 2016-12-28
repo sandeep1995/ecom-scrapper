@@ -160,7 +160,7 @@ function doIt() {
         } else {
           searchIt();
         }
-        var maxTime = (taskLen * 10 * 1000 / 360 * 10 * 1000)  < 1 ? 3600*1000 : taskLen * 10 * 1000;
+        var maxTime = (taskLen * 10 * 1000 / 360 * 10 * 1000)  < 3 ? 3600*1000*3 : taskLen * 10 * 1000;
 
         setTimeout(searchIt, maxTime);
     });
@@ -209,7 +209,7 @@ function searchIt() {
         } else {
           doIt();
         }
-        var maxTime = (products.length * 10 * 1000 / 360 * 10 * 1000)  < 1 ? 3600*1000 : products.length * 10 * 1000;
+        var maxTime = (products.length * 10 * 1000 / 360 * 10 * 1000)  < 3 ? 3600*1000*3 : products.length * 10 * 1000;
         setTimeout(doIt, maxTime);
     });
 }
