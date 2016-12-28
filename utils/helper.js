@@ -101,7 +101,7 @@ const helper = {
     sendNotification: (old, latest) => {
         Task.findOne({
             pid: old.pid
-        }, function(err, docs) {
+        }, function (err, docs) {
             if (err) {
                 return console.log(err);
             }
@@ -110,19 +110,23 @@ const helper = {
                 uid: {
                     $in: uids
                 }
-            }, "token", function(er, users) {
+            }, "token", function (er, users) {
                 if (er) {
                     return console.log(er);
                 }
-                var tokens = users.map(function(item) {
+                var tokens = users.map(function (item) {
                     return item.token;
                 });
+
+                if (tokens.length == 0) {
+                    return console.log("No People to notify");
+                }
 
                 var news = (old.price > latest.price) ? "decreased" : "increased";
 
                 var title = "Now: Rs. " + latest.price + " in " + latest.merchant;
 
-                var body = latest.merchant + ": Price of " + latest.name + " is "+ news + " by Rs. " + Math.abs(old.price - latest.price);
+                var body = latest.merchant + ": Price of " + latest.name + " is " + news + " by Rs. " + Math.abs(old.price - latest.price);
 
                 var options = {
                     method: 'POST',
@@ -136,14 +140,14 @@ const helper = {
                             title: title,
                             body: body,
                             icon: '/android-chrome-192x192.png',
-                            click_action : "http://localhost:3000"
+                            click_action: "http://localhost:3000"
                         },
                         registration_ids: tokens
                     },
                     json: true
                 };
 
-                request(options, function(error, response, body) {
+                request(options, function (error, response, body) {
                     if (error) throw new Error(error);
                     console.log(body);
                 });
