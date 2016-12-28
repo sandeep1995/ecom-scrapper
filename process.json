@@ -1,6 +1,6 @@
 {
   "apps" : [{
-    "name"        : "price-checker",
+    "name"        : "scrapper",
     "script"      : "./bin/www",
     "watch"       : false,
     "env": {
