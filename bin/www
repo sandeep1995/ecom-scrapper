@@ -1,0 +1,217 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+function debounce(func, wait, immediate) {
+    var timeout;
+    return function() {
+        var context = this,
+            args = arguments;
+        var later = function() {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+        };
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+    };
+}
+
+var app = require('../app');
+var debug = require('debug')('d:server');
+var http = require('http');
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '4000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+    var port = parseInt(val, 10);
+
+    if (isNaN(port)) {
+        // named pipe
+        return val;
+    }
+
+    if (port >= 0) {
+        // port number
+        return port;
+    }
+
+    return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+    if (error.syscall !== 'listen') {
+        throw error;
+    }
+
+    var bind = typeof port === 'string' ?
+        'Pipe ' + port :
+        'Port ' + port;
+
+    // handle specific listen errors with friendly messages
+    switch (error.code) {
+        case 'EACCES':
+            console.error(bind + ' requires elevated privileges');
+            process.exit(1);
+            break;
+        case 'EADDRINUSE':
+            console.error(bind + ' is already in use');
+            process.exit(1);
+            break;
+        default:
+            throw error;
+    }
+}
+
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+    var addr = server.address();
+    var bind = typeof addr === 'string' ?
+        'pipe ' + addr :
+        'port ' + addr.port;
+    debug('Listening on ' + bind);
+}
+/*********************************************************/
+
+var MongoClient = require('mongodb').MongoClient;
+var config = require('../config/main')[process.env.NODE_ENV || 'development'];
+var cron = require('node-cron');
+var Promise = require('bluebird');
+
+var Task = require('../models/Task');
+var Product = require('../models/Product');
+
+var grabber = require('../utils/grabber');
+var searcher = require('../utils/searcher');
+
+var helper = require('../utils/helper');
+
+
+
+var taskLen = null;
+
+function doIt() {
+    Task.find({}, function(err, tasks) {
+        var urls = tasks.map(function(item) {
+            return item.url;
+        });
+        taskLen = urls.length;
+        if (urls.length != 0) {
+            console.log("Grabbing Started");
+            (function myLoop(i) {
+                setTimeout(function() {
+                    var url = urls[i];
+                    console.log("Now: ", url);
+                    if (url.indexOf("flipkart") != -1) {
+                        grabber.flipkart(url, helper.getIdFromFlipkart(url));
+                    }
+                    if (url.indexOf("amazon") != -1) {
+                        grabber.amazon(url, helper.getIdFromAmazon(url));
+                    }
+                    if (url.indexOf("ebay") != -1) {
+                        grabber.ebay(url, helper.getIdFromEbay(url));
+                    }
+                    if (url.indexOf("snapdeal") != -1) {
+                        grabber.snapdeal(url, helper.getIdFromSnapdeal(url));
+                    }
+                    if (url.indexOf("myntra") != -1) {
+                        grabber.myntra(url, helper.getIdFromMyntra(url));
+                    }
+                    if (i > 0) {
+                      i--;
+                      myLoop(i);
+                    }
+                }, 7 * 1000)
+            })(taskLen - 1);
+        } else {
+          searchIt();
+        }
+        var maxTime = (taskLen * 10 * 1000 / 360 * 10 * 1000)  < 1 ? 3600*1000 : taskLen * 10 * 1000;
+
+        setTimeout(searchIt, maxTime);
+    });
+}
+
+
+var productLen = null;
+
+function searchIt() {
+    Product.find({}, function(err, docs) {
+        var products = docs.map((item) => {
+            return {
+                pid: item.pid,
+                name: item.name,
+                merchant: item.merchant
+            }
+        });
+        productLen = products.length;
+
+        if (products.length != 0) {
+            console.log("Searching Started");
+            (function myLoop(i) {
+                setTimeout(function() {
+                    var product = products[i];
+                    console.log("Now: ", product.name);
+                    if (product.merchant == 'Flipkart') {
+                        searcher.amazon(product.name, product.pid);
+                        searcher.snapdeal(product.name, product.pid);
+                    }
+
+                    if (product.merchant == 'Amazon') {
+                        searcher.flipkart(product.name, product.pid);
+                        searcher.snapdeal(product.name, product.pid);
+                    }
+
+                    if (product.merchant == 'Snapdeal') {
+                        searcher.amazon(product.name, product.pid);
+                        searcher.flipkart(product.name, product.pid);
+                    }
+                    if (i > 0) {
+                      i--;
+                      myLoop(i);
+                    }
+                }, 7 * 1000)
+            })(productLen - 1);
+        } else {
+          doIt();
+        }
+        var maxTime = (products.length * 10 * 1000 / 360 * 10 * 1000)  < 1 ? 3600*1000 : products.length * 10 * 1000;
+        setTimeout(doIt, maxTime);
+    });
+}
+
+doIt(); // I am pulling Prices | I am the Boss
