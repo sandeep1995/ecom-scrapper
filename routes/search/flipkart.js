@@ -16,6 +16,13 @@ casper.options.viewportSize = {
     height: 768
 };
 
+casper.on('error', function(msg,backtrace) {
+  this.capture('error.png');
+  casper.echo(JSON.stringify(msg));
+  casper.echo(JSON.stringify(backtrace));
+  
+});
+
 function fixedEncodeURIComponent(str) {
     return str.replace(/[ !,'()*]/g, function(c) {
         return '%' + c.charCodeAt(0).toString(16);
@@ -44,6 +51,12 @@ casper.userAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, lik
 
 
 casper.start(searchPage, function() {
+    this.evaluate(function(){
+        localStorage.clear();
+    });
+});
+
+casper.thenOpen(searchPage, function() {
     this.waitForSelector(results);
 });
 
