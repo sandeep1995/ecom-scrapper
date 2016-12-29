@@ -10,7 +10,7 @@ var uniqueName = Math.random().toString(36).substring(7);
 casper.options.exitOnError = false;
 
 casper.options.onLoadError = function() {
-    casper.capture(uniqueName + '-load.png');
+    casper.capture("./data/"+uniqueName + '-load.png');
 }
 var fs = require('fs');
 
@@ -21,7 +21,7 @@ var fs = require('fs');
 // }
 
 casper.on('error', function(msg, backtrace) {
-    casper.capture(uniqueName + '-error.png');
+    casper.capture("./data/"+uniqueName + '-error.png');
     casper.echo(JSON.stringify(backtrace));
     casper.echo(JSON.stringify(msg));
 });
@@ -147,8 +147,8 @@ casper.echo("Starting: " + link);
 
 var i = 0;
 
-var stream = fs.open(uniqueName + "-data.json", "aw");
-var urlStream = fs.open(uniqueName + "-data.csv", "aw");
+var stream = fs.open("./data/"+uniqueName + "-data.json", "aw");
+var urlStream = fs.open("./data/"+uniqueName + "-data.csv", "aw");
 
 function getALlProducts() {
     data = [];
@@ -156,7 +156,7 @@ function getALlProducts() {
     casper.thenClick(".s-layout-toggle-picker > a", function() {
         if (casper.visible(nextPage) || casper.exists(nextPage)) {
             i++;
-            casper.capture(uniqueName + "-image" + i + ".png");
+            casper.capture("./data/"+uniqueName + "-image" + i + ".png");
             data = this.evaluate(getAll);
             var tobewritten = JSON.stringify(data);
             stream.writeLine(tobewritten + ",");
@@ -182,7 +182,7 @@ function getALlProducts() {
     });
 }
 
-casper.start(String(link)).thenClick(".s-layout-toggle-picker > a");
+casper.start(String(link)).thenClick(".s-layout-toggle-picker > a", getALlProducts);
 
 casper.then(getALlProducts);
 
