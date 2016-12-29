@@ -34,7 +34,7 @@ randomProxy(function(proxy) {
                     return {url: item};
                   });
 
-                  MongoClient.connect(config.database, function (err, db) {
+                  MongoClient.connect("mongodb://admin:qwerty@ds019756.mlab.com:19756/ecommerce", function (err, db) {
                       console.log("Connected correctly to server");
                       insertDocument(db, data, function (err, result) {
                           console.log(result);

@@ -14,11 +14,11 @@ casper.options.onLoadError = function() {
 }
 var fs = require('fs');
 
-// if (casper.cli.has(0)) {
-//     casper.options.pageSettings.proxy = String(casper.cli.get(0));
-// } else {
-//     casper.options.pageSettings.proxy = "http://219.106.230.5:80";
-// }
+if (casper.cli.has(0)) {
+    casper.options.pageSettings.proxy = String(casper.cli.get(0));
+} else {
+    casper.options.pageSettings.proxy = "http://219.106.230.5:80";
+}
 
 casper.on('error', function(msg, backtrace) {
     casper.capture("./data/"+uniqueName + '-error.png');

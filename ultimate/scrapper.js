@@ -9,16 +9,14 @@ var randomProxy = require('./helper/randomProxy');
 var MongoClient = require('mongodb').MongoClient;
 
 
-// MongoClient.connect(config.database, function(err, db) {
-//     db.collection('proxy').find({}).toArray(function(err, result) {
-//         db.close();
-//         var proxyList = result.map(function(item) {
-//             return item.ip;
-//         });
-//         var ip = `http://${String(proxyList[Math.floor(Math.random() * proxyList.length)])}`;
-//         return cb(ip);
-//     });
-// });
+MongoClient.connect("mongodb://admin:qwerty@ds019756.mlab.com:19756/ecommerce", function(err, db) {
+    db.collection('amazoncat').find({}).toArray(function(err, result) {
+        db.close();
+        result.forEach(function(item) {
+            scrapHand(item);
+        });
+    });
+});
 
 
 function scrapHand(url) {
@@ -74,6 +72,3 @@ function scrapHand(url) {
     });
 
 }
-scrapHand("/gp/bestsellers/books/ref=sd_allcat_books_bestsellers/253-5956496-3638405");
-// scrapHand("/Android-Mobiles/b?ie=UTF8&node=4916280031");
-scrapHand("/Video-Games-Consoles/b/ref=sd_allcat_vg_consoles/253-5956496-3638405?ie=UTF8&node=4092115031");
