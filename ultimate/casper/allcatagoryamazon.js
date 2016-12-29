@@ -5,9 +5,9 @@ var casper = require('casper').create({
     }
 });
 
-casper.options.exitOnError = true;
+casper.options.exitOnError = false;
 casper.options.onLoadError = function() {
-    casper.exit();
+    casper.capture("load.png")
 }
 
 
