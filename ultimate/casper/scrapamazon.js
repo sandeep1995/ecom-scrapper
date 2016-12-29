@@ -103,29 +103,39 @@ function getAll() {
         return e.getAttribute('src');
     });
 
-    if (names.length == 0 ) {
-      names = document.querySelectorAll("div.a-section.a-spacing-mini > img");
-      names = Array.prototype.map.call(names, function(e) {
-          return e.getAttribute("alt");
-      });
+    return data = names.map(function(item) {
+        var i = names.indexOf(item);
+        return {
+            name: item,
+            url: urls[i],
+            price: prices[i],
+            imgUrl: imgUrls[i]
+        }
+    });
+}
 
-      imgUrls = Array.prototype.map.call(names, function(e) {
-          return e.getAttribute("src");
-      });
+function getAllDiff() {
 
-      prices = document.querySelectorAll(".a-size-base.a-color-price");
+    var names = document.querySelectorAll("div.a-section.a-spacing-mini > img");
+    names = Array.prototype.map.call(names, function(e) {
+        return e.getAttribute("alt");
+    });
 
-      prices = Array.prototype.map.call(prices, function(e) {
-          return String(e.innerText).trim().replace(/[^0-9\.]+/g, "");;
-      });
+    imgUrls = Array.prototype.map.call(names, function(e) {
+        return e.getAttribute("src");
+    });
 
-      urls = document.querySelectorAll("div.a-section.a-spacing-none.p13n-asin > .a-link-normal");
+    var prices = document.querySelectorAll(".a-size-base.a-color-price");
 
-      urls = Array.prototype.map.call(urls, function(e) {
-          return e.getAttribute('href').split("ref")[0];
-      });
+    prices = Array.prototype.map.call(prices, function(e) {
+        return String(e.innerText).trim().replace(/[^0-9\.]+/g, "");;
+    });
 
-    }
+    var urls = document.querySelectorAll("div.a-section.a-spacing-none.p13n-asin > .a-link-normal");
+
+    urls = Array.prototype.map.call(urls, function(e) {
+        return e.getAttribute('href').split("ref")[0];
+    });
 
     return data = names.map(function(item) {
         var i = names.indexOf(item);
@@ -136,6 +146,7 @@ function getAll() {
             imgUrl: imgUrls[i]
         }
     });
+
 }
 
 
@@ -157,7 +168,15 @@ function getALlProducts() {
         if (casper.visible(nextPage) || casper.exists(nextPage)) {
             i++;
             casper.capture("./data/"+uniqueName + "-image" + i + ".png");
-            data = this.evaluate(getAll);
+            if(casper.exists(".cfMarker")) {
+              data = this.evaluate(getAll);
+            }
+
+            if (casper.exists("div.a-section.a-spacing-mini")){
+              data = this.evaluate(getAllDiff);
+            }
+
+
             var tobewritten = JSON.stringify(data);
             stream.writeLine(tobewritten + ",");
             stream.flush();
