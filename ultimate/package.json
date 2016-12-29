@@ -1,0 +1,18 @@
+{
+  "name": "ultimate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "atob": "^2.0.3",
+    "child-process-promise": "^2.2.0",
+    "curlrequest": "^1.0.1",
+    "mongodb": "^2.2.16",
+    "ping-proxy": "^1.0.0"
+  }
+}

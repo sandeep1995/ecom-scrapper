@@ -10,11 +10,11 @@ casper.options.onLoadError = function() {
     casper.exit();
 }
 
-//casper.on('error', function(msg,backtrace) {
-  //casper.capture('error.png');
-  //casper.echo(JSON.stringify(backtrace));
-  //casper.echo(JSON.stringify(msg));
-//});
+casper.on('error', function(msg,backtrace) {
+  casper.capture('error.png');
+  casper.echo(JSON.stringify(backtrace));
+  casper.echo(JSON.stringify(msg));
+});
 
 casper.userAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36');
 
@@ -54,7 +54,7 @@ casper.then(function() {
 
     var productName = this.fetchText(productNameSelector);
     var price = String(this.fetchText(priceSelector)).trim().replace(/[^0-9\.]+/g, "");
-    var imgUrl = String(this.getElementsInfo(imgSelector)[0].attributes.src).trim();
+    var imgUrl = this.getElementsInfo(imgSelector)[0].attributes.data-old-hires;
     var message = {
         name: String(productName).trim(),
         price: Number(price),
