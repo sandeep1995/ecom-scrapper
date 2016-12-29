@@ -153,7 +153,7 @@ var urlStream = fs.open("./data/"+uniqueName + "-data.csv", "aw");
 function getALlProducts() {
     data = [];
     var nextPage = "a#pagnNextLink";
-    casper.thenClick(".s-layout-toggle-picker > a", function() {
+    casper.then(function() {
         if (casper.visible(nextPage) || casper.exists(nextPage)) {
             i++;
             casper.capture("./data/"+uniqueName + "-image" + i + ".png");
@@ -172,7 +172,8 @@ function getALlProducts() {
             nextLink = "http://www.amazon.in" + nextLink.split("&qid")[0];
             casper.echo("Opening>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + nextLink);
             urlStream.writeLine(nextLink + ",");
-            casper.thenOpen(nextLink, getALlProducts);
+            casper.thenClick(nextPage);
+            casper.then(getALlProducts);
         } else {
             stream.close();
             urlStream.close();
