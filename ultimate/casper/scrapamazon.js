@@ -10,40 +10,43 @@ var uniqueName = Math.random().toString(36).substring(7);
 casper.options.exitOnError = false;
 
 casper.options.onLoadError = function() {
-    casper.capture("./data/"+uniqueName + '-load.png');
+    casper.capture("./data/" + uniqueName + '-load.png');
 }
 var fs = require('fs');
 
-if (casper.cli.has(0)) {
-    casper.options.pageSettings.proxy = String(casper.cli.get(0));
-} else {
-    casper.options.pageSettings.proxy = "http://219.106.230.5:80";
-}
+// if (casper.cli.has(0)) {
+//     casper.options.pageSettings.proxy = String(casper.cli.get(0));
+// } else {
+//     casper.options.pageSettings.proxy = "http://219.106.230.5:80";
+// }
 
 casper.on('error', function(msg, backtrace) {
-    casper.capture("./data/"+uniqueName + '-error.png');
+    casper.capture("./data/" + uniqueName + '-error.png');
     casper.echo(JSON.stringify(backtrace));
     casper.echo(JSON.stringify(msg));
 });
 
-casper.on('resource.requested', function(resource) {
-    for (var obj in resource.headers) {
-        var name = resource.headers[obj].name;
-        var value = resource.headers[obj].value;
-        if (name == "User-Agent") {
-            this.echo(value);
-        }
-    }
+// casper.on('resource.requested', function(resource) {
+//     this.echo(JSON.stringify(resource));
+// });
 
-});
+casper.on('remote.message', function(msg) {
+  this.echo(msg);
+})
 
 
 casper.options.onResourceRequested = function(casper, requestData, request) {
+
     var accept = requestData.headers[0];
     // console.log(JSON.stringify(requestData.headers));
-    if (accept.value.indexOf('text/css') !== -1) {
-        casper.echo('Skipping CSS file: ' + requestData.url);
-        request.abort();
+    // if (accept.value.indexOf('text/css') !== -1) {
+    //     casper.echo('Skipping CSS file: ' + requestData.url);
+    //     request.abort();
+    // }
+
+    if (accept.name == "Referer") {
+      casper.echo('Aborting: ' + JSON.stringify(requestData));
+      request.abort();
     }
     if (accept.value.indexOf('text/plain') !== -1) {
         casper.echo('Skipping: ' + requestData.url);
@@ -116,22 +119,25 @@ function getAll() {
 
 function getAllDiff() {
 
-    var names = document.querySelectorAll("div.a-section.a-spacing-mini > img");
+    var names = document.querySelectorAll("#zg_centerListWrapper div.a-section.a-spacing-mini > img");
     names = Array.prototype.map.call(names, function(e) {
         return e.getAttribute("alt");
     });
 
-    imgUrls = Array.prototype.map.call(names, function(e) {
+
+    var imgUrls = document.querySelectorAll("#zg_centerListWrapper div.a-section.a-spacing-mini > img");
+
+    imgUrls = Array.prototype.map.call(imgUrls, function(e) {
         return e.getAttribute("src");
     });
 
-    var prices = document.querySelectorAll(".a-size-base.a-color-price");
+    var prices = document.querySelectorAll("#zg_centerListWrapper .a-size-base.a-color-price");
 
     prices = Array.prototype.map.call(prices, function(e) {
         return String(e.innerText).trim().replace(/[^0-9\.]+/g, "");;
     });
 
-    var urls = document.querySelectorAll("div.a-section.a-spacing-none.p13n-asin > .a-link-normal");
+    var urls = document.querySelectorAll("#zg_centerListWrapper div.a-section.a-spacing-none.p13n-asin > .a-link-normal");
 
     urls = Array.prototype.map.call(urls, function(e) {
         return e.getAttribute('href').split("ref")[0];
@@ -146,63 +152,91 @@ function getAllDiff() {
             imgUrl: imgUrls[i]
         }
     });
-
 }
 
 
 
-
+var tobewritten = [];
 
 var link = String(casper.cli.get(2));;
 casper.echo("Starting: " + link);
 
 var i = 0;
 
-var stream = fs.open("./data/"+uniqueName + "-data.json", "aw");
-var urlStream = fs.open("./data/"+uniqueName + "-data.csv", "aw");
+var stream = fs.open("./data/" + uniqueName + "-data.json", "aw");
+var urlStream = fs.open("./data/" + uniqueName + "-data.csv", "aw");
+
+urlStream.writeLine(JSON.stringify(casper.cli.args));
 
 function getALlProducts() {
-    data = [];
     var nextPage = "a#pagnNextLink";
-    casper.then(function() {
+    casper.wait(2000, function() {
         if (casper.visible(nextPage) || casper.exists(nextPage)) {
             i++;
-            casper.capture("./data/"+uniqueName + "-image" + i + ".png");
-            if(casper.exists(".cfMarker")) {
-              data = this.evaluate(getAll);
+            casper.capture("./data/" + uniqueName + "-image" + i + ".png");
+            if (casper.exists(".cfMarker")) {
+                data = this.evaluate(getAll);
             }
-
-            if (casper.exists("div.a-section.a-spacing-mini")){
-              data = this.evaluate(getAllDiff);
-            }
-
-
-            var tobewritten = JSON.stringify(data);
-            stream.writeLine(tobewritten + ",");
-            stream.flush();
-            urlStream.flush();
-            this.echo(tobewritten);
-            names = [];
-            urls = [];
-            prices = [];
-            imgUrls = [];
-            tobewritten = null;
+            this.echo(data);
             var nextLink = casper.getElementAttribute(nextPage, "href");
             nextLink = "http://www.amazon.in" + nextLink.split("&qid")[0];
             casper.echo("Opening>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + nextLink);
+
             urlStream.writeLine(nextLink + ",");
             casper.thenClick(nextPage);
             casper.then(getALlProducts);
+        } else if (casper.exists("div.a-section.a-spacing-mini") && !casper.exists(".cfMarker")) {
+            i++;
+            casper.capture("./data/" + uniqueName + "-image" + i + ".png");
+            tobewritten = this.evaluate(getAllDiff);
+
+            tobewritten = JSON.stringify(tobewritten);
+
+            this.echo(tobewritten);
+
+            stream.writeLine(tobewritten + ",");
+            stream.flush();
+            urlStream.flush();
+            tobewritten = null;
+
+            var nextLink = this.getElementAttribute(".zg_pagination li:nth-child("+(i+1)+") a", "href");
+
+            if (nextLink == null) {
+                casper.exit();
+                stream.close();
+                urlStream.close();
+                casper.echo("END BY " + nextLink);
+                casper.exit();
+            } else {
+                urlStream.writeLine(nextLink + ",");
+                casper.thenOpen(nextLink);
+                casper.then(getALlProducts);
+            }
+
         } else {
             stream.close();
             urlStream.close();
-            casper.echo("END");
+            casper.echo("a#pagnNextLink END");
             casper.exit();
         }
     });
 }
 
-casper.start(String(link)).thenClick(".s-layout-toggle-picker > a", getALlProducts);
+casper.start(String(link)).wait(2000, function() {
+    casper.capture("./data/" + uniqueName + "-image-first" + i + ".png");
+
+    if (casper.exists(".s-layout-toggle-picker > a") || casper.visible(".s-layout-toggle-picker > a")) {
+        casper.capture("./data/" + uniqueName + "-image-second" + i + ".png");
+        casper.click(".s-layout-toggle-picker > a").then(getALlProducts);
+    } else if (casper.exists("div.a-section.a-spacing-mini") && !casper.exists(".cfMarker")) {
+        casper.then(getALlProducts);
+    } else {
+        stream.close();
+        urlStream.close();
+        casper.echo("FIRST END");
+        casper.exit();
+    }
+});
 
 casper.then(getALlProducts);
 

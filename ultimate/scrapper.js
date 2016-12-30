@@ -7,16 +7,19 @@ var config = require('./config/main')[process.env.NODE_ENV || 'development'];
 var randomAgent = require('./helper/useragent');
 var randomProxy = require('./helper/randomProxy');
 var MongoClient = require('mongodb').MongoClient;
-
-
-MongoClient.connect("mongodb://admin:qwerty@ds019756.mlab.com:19756/ecommerce", function(err, db) {
-    db.collection('amazoncat').find({}).toArray(function(err, result) {
-        db.close();
-        result.forEach(function(item) {
-            scrapHand(item);
-        });
-    });
+var fs = require('fs'); // file system
+var wstream = fs.createWriteStream('data.csv', {
+    flags: 'w'
 });
+
+// MongoClient.connect("mongodb://admin:qwerty@ds019756.mlab.com:19756/ecommerce", function(err, db) {
+//     db.collection('amazoncat').find({}).toArray(function(err, result) {
+//         db.close();
+//         result.forEach(function(item) {
+//             scrapHand(item);
+//         });
+//     });
+// });
 
 
 function scrapHand(url) {
@@ -27,12 +30,14 @@ function scrapHand(url) {
         var child = null;
         var i = 0;
         pinger.stdout.on('data', (data) => {
-            console.log(`stdout: ${data} ${++i}`);
+            console.log(`stdout: ${data} "---- " ${++i}`);
+
+
             if (i === 3) {
                 pinger.kill("SIGINT");
                 clearTimeout(timer);
 
-                child = spawn('casperjs', ['casper/scrapamazon.js', String(proxy), String(agent), "http://www.amazon.in"+url]);
+                child = spawn('casperjs', ['casper/scrapamazon.js', String(proxy), String(agent), "http://www.amazon.in" + url]);
 
                 // child.then(function (result) {
                 //   console.log("*********************************");
@@ -43,6 +48,7 @@ function scrapHand(url) {
 
                 child.stdout.on('data', (data) => {
                     console.log(`stdout: ${data}`);
+                    wstream.write(data);
                 });
 
                 child.stderr.on('data', (data) => {
@@ -56,19 +62,25 @@ function scrapHand(url) {
         });
 
         var timer = setTimeout(function() {
-            pinger.kill("SIGINT");
+            pinger.kill();
             scrapHand(url);
-
         }, 5000);
 
         pinger.stderr.on('data', (data) => {
             console.log(`stderr: ${data}`);
+            clearTimeout(timer);
+            scrapHand(url);
         });
 
         pinger.on('close', (code) => {
+            scrapHand(url);
+            clearTimeout(timer);
             console.log(`pinger exited with code ${code}`);
+
         });
 
     });
 
 }
+
+scrapHand("/gp/bestsellers/books/ref=sd_allcat_books_bestsellers");
