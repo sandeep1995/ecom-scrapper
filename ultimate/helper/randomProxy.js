@@ -1,13 +1,13 @@
-var config = require('../config/main')[process.env.NODE_ENV || 'development'];
+var config = require('../config/main')['development'];
 var MongoClient = require('mongodb').MongoClient;
 var pingProxy = require('ping-proxy');
 var ips = [];
 const randomProxy = function (cb) {
     var ip = null;
-    MongoClient.connect("mongodb://127.0.0.1:27017/ecommerce", function (err, db) {
+    MongoClient.connect(config.database, function (err, db) {
         db.collection('proxy').find({}).sort({
             timestamp: -1
-        }).limit(10).toArray(function (err, result) {
+        }).limit(150).toArray(function (err, result) {
              db.close();
             if (err) {
                 console.log(err);
@@ -29,10 +29,10 @@ const randomProxy = function (cb) {
 
 const proxyList = function (cb) {
     var ip = null;
-    MongoClient.connect("mongodb://127.0.0.1:27017/ecommerce", function (err, db) {
+    MongoClient.connect(config.database, function (err, db) {
         db.collection('proxy').find({}).sort({
             timestamp: -1
-        }).limit(350).toArray(function (err, result) {
+        }).limit(150).toArray(function (err, result) {
              db.close();
             if (err) {
                 console.log(err);

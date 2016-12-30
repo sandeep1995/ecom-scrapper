@@ -2,7 +2,7 @@ var execFile = require('child-process-promise').execFile;
 var spawn = require('child_process').spawn;
 
 var atob = require('atob');
-var config = require('./config/main')[process.env.NODE_ENV || 'development'];
+var config = require('./config/main')['development'];
 var randomAgent = require('./helper/useragent');
 
 var randomProxy = require('./helper/randomProxy').randomProxy;
@@ -39,8 +39,8 @@ function loadProcess(arg) {
 
 var promies = [];
 
-MongoClient.connect("mongodb://127.0.0.1:27017/ecommerce", function(err, db) {
-    db.collection('amazoncat').find({}).limit(10).toArray(function(err, result) {
+MongoClient.connect(config.database, function(err, db) {
+    db.collection('amazoncat').find({}).skip(62).limit(30).toArray(function(err, result) {
 
         db.close();
         proxyList(function(list) {
@@ -57,25 +57,24 @@ MongoClient.connect("mongodb://127.0.0.1:27017/ecommerce", function(err, db) {
                                 ip: list[j],
                                 url: result[i - 1].url
                             }));
-                            if (i == 1) {
-                                clearTimeout(launcher);
-                                wstream.write("[---------------------Starting--------------------------] ");
-                                Promise.map(promies, function(command) {
-                                        return command();
-                                    })
-                                    .then(function() {
-                                        wstream.write("[---------------------Done--------------------------] ");
-
-                                        console.log('Child Processes Completed');
-                                    });
-                            }
                         } else {
                             console.log(list[j] + " is dead");
+                        }
+                        if (i == 1) {
+                            clearTimeout(launcher);
+                            wstream.write("[---------------------Starting--------------------------] ");
+                            Promise.map(promies, function(command) {
+                                    return command();
+                                }, {concurrency: 1})
+                                .then(function() {
+                                    wstream.write("[---------------------Done--------------------------] ");
+                                    console.log('Child Processes Completed');
+                                });
                         }
                         j++;
                         if (--i) myLoop(i);
                     });
-                }, 1000);
+                }, 5000);
             })(result.length);
         });
     });
@@ -85,14 +84,14 @@ function isAlive(ip, cb) {
     var pinger = spawn("ping", [ip.split(":")[0]]);
     var i = 0;
     var timer = setTimeout(function() {
-        if (i < 2) {
+        if (i < 4) {
             cb(false);
         } else {
             cb(true);
         }
         clearTimeout(timer);
         pinger.kill("SIGINT");
-    }, 3000);
+    }, 5000);
 
     pinger.stdout.setEncoding("utf-8")
     pinger.stdout.on("data", function(data) {

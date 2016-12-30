@@ -10,6 +10,10 @@ casper.options.onLoadError = function () {
     this.capture("proxy-error.png");
 }
 
+if (casper.cli.has(0)) {
+    casper.options.pageSettings.proxy = String(casper.cli.get(0));
+}
+
 casper.on('error', function (msg, backtrace) {
     casper.capture('error.png');
 });
@@ -47,9 +51,9 @@ casper.options.viewportSize = {
     height: 768
 };
 
-var link = "https://proxy-spider.com/";
+var link = "https://api.ipify.org/?format=json";
 casper.start(link, function () {
-    this.echo(JSON.stringify(this.getGlobal('pr')));
+    this.echo(this.fetchText('pre'));
 });
 
 

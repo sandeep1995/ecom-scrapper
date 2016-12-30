@@ -1,6 +1,6 @@
 var casper = require('casper').create({
-    // verbose: true,
-    // logLevel: "debug",
+    verbose: true,
+    logLevel: "debug",
     pageSettings: {
         loadImages: false,
         loadPlugins: false
@@ -16,8 +16,6 @@ var fs = require('fs');
 
 if (casper.cli.has(0)) {
     casper.options.pageSettings.proxy = String(casper.cli.get(0));
-} else {
-    casper.options.pageSettings.proxy = "http://219.106.230.5:80";
 }
 
 casper.on('error', function(msg, backtrace) {
@@ -39,10 +37,10 @@ casper.options.onResourceRequested = function(casper, requestData, request) {
 
     var accept = requestData.headers[0];
 
-    // if (accept.value.indexOf('text/css') !== -1) {
-    //     casper.echo('Skipping CSS file: ' + requestData.url);
-    //     request.abort();
-    // }
+    if (accept.value.indexOf('text/css') !== -1) {
+        casper.echo('Skipping CSS file: ' + requestData.url);
+        request.abort();
+    }
 
     if (accept.value.indexOf('text/plain') !== -1) {
       //  casper.echo('Skipping: ' + requestData.url);
@@ -65,7 +63,7 @@ casper.options.onResourceRequested = function(casper, requestData, request) {
     })
 };
 
-casper.options.waitTimeout = 20000;
+casper.options.waitTimeout = 60000;
 casper.options.viewportSize = {
     width: 1366,
     height: 768
@@ -228,7 +226,7 @@ function getALlProducts() {
     });
 }
 
-casper.start(String(link)).wait(2000, function() {
+casper.start(String(link)).wait(10000, function() {
     casper.capture("./data/" + uniqueName + "-image-first" + i + ".png");
     if (casper.exists(".s-layout-toggle-picker > a") || casper.visible(".s-layout-toggle-picker > a")) {
         casper.capture("./data/" + uniqueName + "-button" + i + ".png");
