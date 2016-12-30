@@ -1,86 +1,101 @@
 var execFile = require('child-process-promise').execFile;
-
-const spawn = require('child_process').spawn;
+var spawn = require('child_process').spawn;
 
 var atob = require('atob');
 var config = require('./config/main')[process.env.NODE_ENV || 'development'];
 var randomAgent = require('./helper/useragent');
-var randomProxy = require('./helper/randomProxy');
+
+var randomProxy = require('./helper/randomProxy').randomProxy;
+var proxyList = require('./helper/randomProxy').proxyList;
+
 var MongoClient = require('mongodb').MongoClient;
-var fs = require('fs'); // file system
+var fs = require('fs');
 var wstream = fs.createWriteStream('data.csv', {
-    flags: 'w'
+    flags: 'a'
 });
 
-// MongoClient.connect("mongodb://admin:qwerty@ds019756.mlab.com:19756/ecommerce", function(err, db) {
-//     db.collection('amazoncat').find({}).toArray(function(err, result) {
-//         db.close();
-//         result.forEach(function(item) {
-//             scrapHand(item);
-//         });
-//     });
-// });
+var ping = require("ping");
+var Promise = require('bluebird');
 
+function loadProcess(arg) {
+    return new Promise(function(resolve, reject) {
 
-function scrapHand(url) {
-    randomProxy(function(proxy) {
-        var agent = randomAgent();
-        console.log(proxy);
-        const pinger = spawn("ping", [proxy.split("//")[1].split(":")[0]]);
-        var child = null;
-        var i = 0;
-        pinger.stdout.on('data', (data) => {
-            console.log(`stdout: ${data} "---- " ${++i}`);
+        child = spawn('casperjs', ['casper/scrapamazon.js', String(arg.ip), String(randomAgent()), "http://www.amazon.in" + arg.url]);
 
-
-            if (i === 3) {
-                pinger.kill("SIGINT");
-                clearTimeout(timer);
-
-                child = spawn('casperjs', ['casper/scrapamazon.js', String(proxy), String(agent), "http://www.amazon.in" + url]);
-
-                // child.then(function (result) {
-                //   console.log("*********************************");
-                //   console.log(result);
-                // }).catch(function (err) {
-                //   console.log(err);
-                // });
-
-                child.stdout.on('data', (data) => {
-                    console.log(`stdout: ${data}`);
-                    wstream.write(data);
-                });
-
-                child.stderr.on('data', (data) => {
-                    console.log(`stderr: ${data}`);
-                });
-
-                child.on('close', (code) => {
-                    console.log(`casper exited with code ${code}`);
-                });
-            }
+        child.stdout.on('data', function(data) {
+            wstream.write(data.toString())
+            console.log(data.toString());
         });
 
-        var timer = setTimeout(function() {
-            pinger.kill();
-            scrapHand(url);
-        }, 5000);
-
-        pinger.stderr.on('data', (data) => {
-            console.log(`stderr: ${data}`);
-            clearTimeout(timer);
-            scrapHand(url);
+        child.stderr.on('data', function(err) {
+            reject(err.toString());
         });
 
-        pinger.on('close', (code) => {
-            scrapHand(url);
-            clearTimeout(timer);
-            console.log(`pinger exited with code ${code}`);
-
+        child.on('close', function() {
+            resolve();
         });
-
     });
-
 }
 
-scrapHand("/gp/bestsellers/books/ref=sd_allcat_books_bestsellers");
+var promies = [];
+
+MongoClient.connect("mongodb://127.0.0.1:27017/ecommerce", function(err, db) {
+    db.collection('amazoncat').find({}).limit(10).toArray(function(err, result) {
+
+        db.close();
+        proxyList(function(list) {
+            j = 0;
+            (function myLoop(i) {
+                var launcher = setTimeout(function() {
+                    isAlive(list[j], function(life) {
+                        if (life) {
+                            // ip is Good, launch
+                            console.log(list[j] + " is alive");
+                            wstream.write("Using: " + list[j] + "\n");
+                            wstream.write("Queing: " + result[i - 1].url + "\n");
+                            promies.push(loadProcess.bind(null, {
+                                ip: list[j],
+                                url: result[i - 1].url
+                            }));
+                            if (i == 1) {
+                                clearTimeout(launcher);
+                                wstream.write("[---------------------Starting--------------------------] ");
+                                Promise.map(promies, function(command) {
+                                        return command();
+                                    })
+                                    .then(function() {
+                                        wstream.write("[---------------------Done--------------------------] ");
+
+                                        console.log('Child Processes Completed');
+                                    });
+                            }
+                        } else {
+                            console.log(list[j] + " is dead");
+                        }
+                        j++;
+                        if (--i) myLoop(i);
+                    });
+                }, 1000);
+            })(result.length);
+        });
+    });
+});
+
+function isAlive(ip, cb) {
+    var pinger = spawn("ping", [ip.split(":")[0]]);
+    var i = 0;
+    var timer = setTimeout(function() {
+        if (i < 2) {
+            cb(false);
+        } else {
+            cb(true);
+        }
+        clearTimeout(timer);
+        pinger.kill("SIGINT");
+    }, 3000);
+
+    pinger.stdout.setEncoding("utf-8")
+    pinger.stdout.on("data", function(data) {
+        i++;
+    });
+}

@@ -22,7 +22,7 @@ function proxyFinder() {
                 return { ip: atob(item.proxy), timestamp: new Date() };
             });
 
-            MongoClient.connect("mongodb://admin:qwerty@ds019756.mlab.com:19756/ecommerce", function (err, db) {
+            MongoClient.connect("mongodb://127.0.0.1:27017/ecommerce", function (err, db) {
                 console.log("Connected correctly to server");
                 insertDocuments(db, proxyArray, function (err, result) {
                     console.log(result);

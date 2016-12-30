@@ -1,6 +1,6 @@
 var casper = require('casper').create({
-    verbose: true,
-    logLevel: "debug",
+    // verbose: true,
+    // logLevel: "debug",
     pageSettings: {
         loadImages: false,
         loadPlugins: false
@@ -14,11 +14,11 @@ casper.options.onLoadError = function() {
 }
 var fs = require('fs');
 
-// if (casper.cli.has(0)) {
-//     casper.options.pageSettings.proxy = String(casper.cli.get(0));
-// } else {
-//     casper.options.pageSettings.proxy = "http://219.106.230.5:80";
-// }
+if (casper.cli.has(0)) {
+    casper.options.pageSettings.proxy = String(casper.cli.get(0));
+} else {
+    casper.options.pageSettings.proxy = "http://219.106.230.5:80";
+}
 
 casper.on('error', function(msg, backtrace) {
     casper.capture("./data/" + uniqueName + '-error.png');
@@ -30,28 +30,25 @@ casper.on('error', function(msg, backtrace) {
 //     this.echo(JSON.stringify(resource));
 // });
 
-casper.on('remote.message', function(msg) {
-  this.echo(msg);
-})
+// casper.on('remote.message', function(msg) {
+//   this.echo(msg);
+// });
 
 
 casper.options.onResourceRequested = function(casper, requestData, request) {
 
     var accept = requestData.headers[0];
-    // console.log(JSON.stringify(requestData.headers));
+
     // if (accept.value.indexOf('text/css') !== -1) {
     //     casper.echo('Skipping CSS file: ' + requestData.url);
     //     request.abort();
     // }
 
-    if (accept.name == "Referer") {
-      casper.echo('Aborting: ' + JSON.stringify(requestData));
-      request.abort();
-    }
     if (accept.value.indexOf('text/plain') !== -1) {
-        casper.echo('Skipping: ' + requestData.url);
+      //  casper.echo('Skipping: ' + requestData.url);
         request.abort();
     }
+
     var skip = [
         "adsensecustomsearchads",
         'amazon-adsystem.com',
@@ -177,10 +174,19 @@ function getALlProducts() {
             if (casper.exists(".cfMarker")) {
                 data = this.evaluate(getAll);
             }
-            this.echo(data);
+
+            tobewritten = JSON.stringify(data);
+
+            this.echo(tobewritten);
+
+            stream.writeLine(tobewritten + ",");
+            stream.flush();
+            urlStream.flush();
+            tobewritten = null;
+
             var nextLink = casper.getElementAttribute(nextPage, "href");
             nextLink = "http://www.amazon.in" + nextLink.split("&qid")[0];
-            casper.echo("Opening>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + nextLink);
+            casper.echo("Opening: " + nextLink);
 
             urlStream.writeLine(nextLink + ",");
             casper.thenClick(nextPage);
@@ -224,15 +230,17 @@ function getALlProducts() {
 
 casper.start(String(link)).wait(2000, function() {
     casper.capture("./data/" + uniqueName + "-image-first" + i + ".png");
-
     if (casper.exists(".s-layout-toggle-picker > a") || casper.visible(".s-layout-toggle-picker > a")) {
-        casper.capture("./data/" + uniqueName + "-image-second" + i + ".png");
-        casper.click(".s-layout-toggle-picker > a").then(getALlProducts);
+        casper.capture("./data/" + uniqueName + "-button" + i + ".png");
+        casper.thenClick(".s-layout-toggle-picker > a");
+        casper.then(getALlProducts);
     } else if (casper.exists("div.a-section.a-spacing-mini") && !casper.exists(".cfMarker")) {
+        casper.capture("./data/" + uniqueName + "-image-second-abnormal" + i + ".png");
         casper.then(getALlProducts);
     } else {
         stream.close();
         urlStream.close();
+        casper.capture("./data/" + uniqueName + "-Failed" + i + ".png");
         casper.echo("FIRST END");
         casper.exit();
     }
