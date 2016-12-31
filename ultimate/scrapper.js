@@ -20,7 +20,7 @@ var Promise = require('bluebird');
 function loadProcess(arg) {
     return new Promise(function(resolve, reject) {
 
-        child = spawn('casperjs', ['casper/scrapamazon.js', String(arg.ip), String(randomAgent()), "http://www.amazon.in" + arg.url]);
+        child = spawn('casperjs', ['casper/scrapamazon.js', String(arg.ip), "http://www.amazon.in" + arg.url]);
 
         child.stdout.on('data', function(data) {
             wstream.write(data.toString())
@@ -40,41 +40,38 @@ function loadProcess(arg) {
 var promies = [];
 
 MongoClient.connect(config.database, function(err, db) {
-    db.collection('amazoncat').find({}).skip(62).limit(30).toArray(function(err, result) {
-
+    db.collection('amazoncat').find({}).skip(65).limit(10).toArray(function(err, result) {
         db.close();
         proxyList(function(list) {
             j = 0;
             (function myLoop(i) {
                 var launcher = setTimeout(function() {
-                    isAlive(list[j], function(life) {
-                        if (life) {
+
                             // ip is Good, launch
-                            console.log(list[j] + " is alive");
-                            wstream.write("Using: " + list[j] + "\n");
+                            var ip = list[Math.floor(Math.random() * list.length)]
+                            console.log(ip + " will be used");
+                            wstream.write("Using: " + ip + "\n");
                             wstream.write("Queing: " + result[i - 1].url + "\n");
                             promies.push(loadProcess.bind(null, {
-                                ip: list[j],
+                                ip: ip,
                                 url: result[i - 1].url
                             }));
-                        } else {
-                            console.log(list[j] + " is dead");
-                        }
+
                         if (i == 1) {
                             clearTimeout(launcher);
                             wstream.write("[---------------------Starting--------------------------] ");
                             Promise.map(promies, function(command) {
                                     return command();
-                                }, {concurrency: 1})
+                                }, {concurrency: 2})
                                 .then(function() {
                                     wstream.write("[---------------------Done--------------------------] ");
                                     console.log('Child Processes Completed');
                                 });
                         }
-                        j++;
+
                         if (--i) myLoop(i);
-                    });
-                }, 5000);
+
+                }, 500);
             })(result.length);
         });
     });

@@ -37,10 +37,10 @@ casper.options.onResourceRequested = function(casper, requestData, request) {
 
     var accept = requestData.headers[0];
 
-    if (accept.value.indexOf('text/css') !== -1) {
-        casper.echo('Skipping CSS file: ' + requestData.url);
-        request.abort();
-    }
+    // if (accept.value.indexOf('text/css') !== -1) {
+    //     casper.echo('Skipping CSS file: ' + requestData.url);
+    //     request.abort();
+    // }
 
     if (accept.value.indexOf('text/plain') !== -1) {
       //  casper.echo('Skipping: ' + requestData.url);
@@ -63,13 +63,13 @@ casper.options.onResourceRequested = function(casper, requestData, request) {
     })
 };
 
-casper.options.waitTimeout = 60000;
+casper.options.waitTimeout = 60000*3; // 3 min for Each
 casper.options.viewportSize = {
     width: 1366,
     height: 768
 };
 
-casper.userAgent(String(casper.cli.get(1)));
+casper.userAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36");
 
 var names = [];
 var urls = [];
@@ -153,7 +153,7 @@ function getAllDiff() {
 
 var tobewritten = [];
 
-var link = String(casper.cli.get(2));;
+var link = String(casper.cli.get(1));;
 casper.echo("Starting: " + link);
 
 var i = 0;
@@ -165,8 +165,8 @@ urlStream.writeLine(JSON.stringify(casper.cli.args));
 
 function getALlProducts() {
     var nextPage = "a#pagnNextLink";
-    casper.wait(2000, function() {
-        if (casper.visible(nextPage) || casper.exists(nextPage)) {
+    casper.wait(5000, function() {
+        if (casper.visible(nextPage)) {
             i++;
             casper.capture("./data/" + uniqueName + "-image" + i + ".png");
             if (casper.exists(".cfMarker")) {
@@ -187,7 +187,7 @@ function getALlProducts() {
             casper.echo("Opening: " + nextLink);
 
             urlStream.writeLine(nextLink + ",");
-            casper.thenClick(nextPage);
+            casper.thenOpen(nextLink);
             casper.then(getALlProducts);
         } else if (casper.exists("div.a-section.a-spacing-mini") && !casper.exists(".cfMarker")) {
             i++;

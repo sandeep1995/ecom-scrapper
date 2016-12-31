@@ -57,6 +57,10 @@ casper.start(link, function () {
 });
 
 
+casper.thenOpen("http://www.whatsmyip.org", function () {
+  this.capture("myip-2.png");
+});
+
 casper.run(function () {
     this.exit();
 });
