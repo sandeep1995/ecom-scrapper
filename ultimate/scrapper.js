@@ -40,7 +40,7 @@ function loadProcess(arg) {
 var promies = [];
 
 MongoClient.connect(config.database, function(err, db) {
-    db.collection('amazoncat').find({}).skip(65).limit(10).toArray(function(err, result) {
+    db.collection('amazoncat').find({}).skip(65).limit(100).toArray(function(err, result) {
         db.close();
         proxyList(function(list) {
             j = 0;
