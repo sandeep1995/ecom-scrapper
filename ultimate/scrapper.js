@@ -62,7 +62,7 @@ MongoClient.connect(config.database, function(err, db) {
                             wstream.write("[---------------------Starting--------------------------] ");
                             Promise.map(promies, function(command) {
                                     return command();
-                                }, {concurrency: 2})
+                                }, {concurrency: 1})
                                 .then(function() {
                                     wstream.write("[---------------------Done--------------------------] ");
                                     console.log('Child Processes Completed');
